@@ -1,18 +1,19 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace At.Matus.Instruments.PowerSupply.Abstractions
+﻿namespace At.Matus.Instruments.PowerSupply.Abstractions
 {
     public interface IPowerSupply
     {
-        void SetVoltage(double voltage);
-        double GetVoltage();
-        void SetCurrent(double current);
-        double GetCurrent();
+        string InstrumentManufacturer { get; }
+        string InstrumentType { get; }
+        string InstrumentFirmwareVersion { get; }
+        string InstrumentSerialNumber { get; }
+
         void TurnOn();
         void TurnOff();
+        void SetVoltage(double voltage);
+        void SetCurrent(double current);
+        double GetVoltage();
+        double GetCurrent();
+        double GetSetVoltage();
+        double GetSetCurrent();
     }
 }

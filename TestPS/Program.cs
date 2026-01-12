@@ -15,9 +15,11 @@ namespace TestPS
             var ps = new RsPower("COM6");
             double U, I;
 
-            Console.WriteLine($"Type {ps.InstrumentType}");
-            Console.WriteLine($"SerialNumber {ps.InstrumentSerialNumber}");
-            Console.WriteLine($"FirmwareVersion {ps.InstrumentFirmwareVersion}");
+            ps.TurnOff();
+
+            Console.WriteLine($"Type:            {ps.InstrumentType}");
+            Console.WriteLine($"SerialNumber:    {ps.InstrumentSerialNumber}");
+            Console.WriteLine($"FirmwareVersion: {ps.InstrumentFirmwareVersion}");
 
 
             ps.TurnOff(); ps.SetVoltage(0); ps.SetCurrent(0);

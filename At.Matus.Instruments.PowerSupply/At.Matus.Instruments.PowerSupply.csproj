@@ -43,6 +43,7 @@
   <ItemGroup>
     <Compile Include="Abstractions\IPowerSupply.cs" />
     <Compile Include="Domain\RsPower.cs" />
+    <Compile Include="Domain\RsPowerPriv.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup />
