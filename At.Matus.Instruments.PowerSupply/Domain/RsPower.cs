@@ -40,5 +40,7 @@ namespace At.Matus.Instruments.PowerSupply.Domain
         public double GetVoltage() => QueryDouble("VOUT1?");
 
         public double GetCurrent() => QueryDouble("IOUT1?");
+
+        public string GetStatus() => Query("STATUS?");
     }
 }
