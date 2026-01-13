@@ -12,8 +12,8 @@ namespace At.Matus.Instruments.PowerSupply.Domain
             {
                 Handshake = Handshake.None,
                 NewLine = "\n",
-                ReadTimeout = 2000,
-                WriteTimeout = 500
+                ReadTimeout = 100,
+                WriteTimeout = 100
             };
             _serialPort.Open();
             UpdateInstrumentId();
@@ -41,6 +41,11 @@ namespace At.Matus.Instruments.PowerSupply.Domain
 
         public double GetCurrent() => QueryDouble("IOUT1?");
 
-        public string GetStatus() => Query("STATUS?");
+        public void OcpOff() => Query("OCP0");
+
+        public void OcpOn() => Query("OCP1");
+
+        public string GetStatus() => ToFriendlyString(_GetStatus());
+
     }
 }

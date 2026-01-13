@@ -8,7 +8,7 @@ namespace At.Matus.Instruments.PowerSupply.Domain
     public partial class RsPower
     {
         private readonly SerialPort _serialPort;
-        private const int _transmitDelay = 100;
+        private const int _transmitDelay = 10;
 
         private string Query(string command)
         {
@@ -62,5 +62,15 @@ namespace At.Matus.Instruments.PowerSupply.Domain
 
         private string RemoveNewLine(string line) => line.Replace("\r", string.Empty).Replace("\n", string.Empty);
 
+        private byte _GetStatus()
+        {
+            var str = Query("STATUS?");
+            byte[] bytes = System.Text.Encoding.ASCII.GetBytes(str);
+            if (bytes.Length > 0)
+                return bytes[0];
+            return 0x00;
+        }
+
+        private string ToFriendlyString(byte b) => Convert.ToString(b, 2).PadLeft(8, '0');
     }
 }
