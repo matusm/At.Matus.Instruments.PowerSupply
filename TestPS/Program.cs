@@ -1,6 +1,7 @@
 ﻿using At.Matus.Instruments.PowerSupply.Domain;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -14,7 +15,6 @@ namespace TestPS
         static void Main(string[] args)
         {
             ps = new RsPower("COM6");
-            double U, I;
 
             ps.TurnOff();
             ps.SetVoltage(0); 
@@ -29,7 +29,7 @@ namespace TestPS
             ps.TurnOn();
             Console.WriteLine($"Status: {ps.GetStatus()}");
 
-            RampUp(12);
+            RampUpVoltage(12);
             Thread.Sleep(2000);
             RampDown();
 
@@ -39,16 +39,25 @@ namespace TestPS
             Console.WriteLine($"Status: {ps.GetStatus()}");
         }
 
-        public static void RampUp(double voltage)
+        // with time monitoring
+        // ps must be in CC mode
+        public static void RampUpVoltage(double voltage)
         {
             ps.SetCurrent(0);
             ps.SetVoltage(voltage);
             ps.TurnOn();
+            DateTime start = DateTime.Now;
+            int index = 0;
             for (int ma = 0; ma < 5000; ma += 10)
             {
+                index++;
                 ps.SetCurrent(ma / 1000.0);
                 Thread.Sleep(1);
-                if(ps.GetVoltage()>=ps.GetSetVoltage())
+                double u = ps.GetVoltage();
+                double i = ps.GetCurrent();
+                TimeSpan elapsed = DateTime.Now - start;
+                Console.WriteLine($"{index,3}: {elapsed.TotalSeconds,4:F1}s  {u:F2} V  {i:F3} A");
+                if (u >= ps.GetSetVoltage())
                     return;
             }
         }

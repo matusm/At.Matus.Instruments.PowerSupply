@@ -42,9 +42,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Abstractions\IPowerSupply.cs" />
+    <Compile Include="Domain\ManualPower.cs" />
     <Compile Include="Domain\NullPower.cs" />
     <Compile Include="Domain\RsPower.cs" />
     <Compile Include="Domain\RsPowerPriv.cs" />
+    <Compile Include="Extensions\Ramp.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup />
