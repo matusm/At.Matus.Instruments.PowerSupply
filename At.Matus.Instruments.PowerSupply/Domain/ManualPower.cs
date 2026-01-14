@@ -36,6 +36,11 @@ namespace At.Matus.Instruments.PowerSupply.Domain
 
         public double GetSetCurrent() => _setCurrent;
 
+        public string GetStatus()
+        {
+            return $"Power Supply is {(_isOn ? "ON" : "OFF")}, Set Voltage: {_setVoltage:F2} V, Actual Voltage: {_actualVoltage:F2} V, Set Current: {_setCurrent:F3} A, Actual Current: {_actualCurrent:F3} A";
+        }
+
         private double _actualVoltage = 0.0;
         private double _actualCurrent = 0.0;
         private double _setVoltage = 0.0;
