@@ -25,6 +25,9 @@ namespace At.Matus.Instruments.PowerSupply.Domain
         public string InstrumentFirmwareVersion { get; private set; } = string.Empty;
         public string InstrumentSerialNumber { get; private set; } = string.Empty;
 
+        public double MaxVoltage => 30.0;
+        public double MaxCurrent => 5.0;
+
         public void TurnOff() => Query("OUT0");
 
         public void TurnOn() => Query("OUT1");

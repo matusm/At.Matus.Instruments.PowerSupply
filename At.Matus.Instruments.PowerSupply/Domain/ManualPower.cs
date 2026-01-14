@@ -9,6 +9,9 @@ namespace At.Matus.Instruments.PowerSupply.Domain
         public string InstrumentFirmwareVersion => "1.0.0";
         public string InstrumentSerialNumber => "000";
 
+        public double MaxVoltage => 30.0;
+        public double MaxCurrent => 5.0;
+
         public void TurnOn() => _isOn = true;
 
         public void TurnOff() => _isOn = false;

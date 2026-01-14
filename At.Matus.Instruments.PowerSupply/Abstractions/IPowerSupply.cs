@@ -7,6 +7,9 @@
         string InstrumentFirmwareVersion { get; }
         string InstrumentSerialNumber { get; }
 
+        double MaxVoltage { get; }
+        double MaxCurrent { get; }
+
         void TurnOn();
         void TurnOff();
         void SetVoltage(double voltage);
