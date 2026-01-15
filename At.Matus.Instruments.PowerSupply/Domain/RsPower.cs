@@ -20,6 +20,10 @@ namespace At.Matus.Instruments.PowerSupply.Domain
         }
 
         public string DevicePort => _serialPort.PortName;
+        public Mode Mode { get { UpdateStatus(); return _mode; } }
+        public OutputState OutputState { get { UpdateStatus(); return _outputState; } }
+        public OcpState OcpState { get { UpdateStatus(); return _ocpState; } }
+
         public string InstrumentManufacturer => "RS";
         public string InstrumentType { get; private set; } = string.Empty;
         public string InstrumentFirmwareVersion { get; private set; } = string.Empty;
@@ -48,7 +52,10 @@ namespace At.Matus.Instruments.PowerSupply.Domain
 
         public void OcpOn() => Query("OCP1");
 
-        public string GetStatus() => ToFriendlyString(_GetStatus());
-
+        public string GetStatus()
+        {
+            byte b = _GetStatus();
+            return ToFriendlyString(b);
+        }
     }
 }

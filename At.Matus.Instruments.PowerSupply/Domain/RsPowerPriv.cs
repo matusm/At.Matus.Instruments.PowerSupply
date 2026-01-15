@@ -10,6 +10,10 @@ namespace At.Matus.Instruments.PowerSupply.Domain
         private readonly SerialPort _serialPort;
         private const int _transmitDelay = 10;
 
+        private OutputState _outputState = OutputState.Unknown;
+        private OcpState _ocpState = OcpState.Unknown;
+        private Mode _mode = Mode.Unknown;
+
         private string Query(string command)
         {
             Write(command);
@@ -62,6 +66,12 @@ namespace At.Matus.Instruments.PowerSupply.Domain
 
         private string RemoveNewLine(string line) => line.Replace("\r", string.Empty).Replace("\n", string.Empty);
 
+        private void UpdateStatus()
+        {
+            byte b = _GetStatus();
+            UpdateStatusFromBits(ToBits(b));
+        }
+
         private byte _GetStatus()
         {
             var str = Query("STATUS?");
@@ -71,6 +81,29 @@ namespace At.Matus.Instruments.PowerSupply.Domain
             return 0x00;
         }
 
+        private bool[] ToBits(byte b)
+        {
+            bool[] result = new bool[8];
+            for (int i = 0; i < result.Length; i++)
+            {
+                result[i] = (b & (1 << i)) != 0;
+            }
+            return result;
+        }
+
         private string ToFriendlyString(byte b) => Convert.ToString(b, 2).PadLeft(8, '0');
+
+        private void UpdateStatusFromBits(bool[] bits)
+        {
+            _outputState = OutputState.Unknown;
+            _ocpState = OcpState.Unknown;
+            _mode = Mode.Unknown;
+            if (bits.Length != 8)
+                return;
+            _ocpState = bits[5] ? OcpState.On : OcpState.Off;
+            _outputState = bits[6] ? OutputState.On : OutputState.Off;
+            if (_outputState == OutputState.On)
+                _mode = bits[0] ? Mode.ConstantVoltage : Mode.ConstantCurrent;
+        }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using At.Matus.Instruments.PowerSupply.Abstractions;
 using At.Matus.Instruments.PowerSupply.Domain;
 using System;
+using System.Reflection;
 using System.Threading;
 
 namespace TestPS
@@ -22,15 +23,19 @@ namespace TestPS
             Console.WriteLine($"FirmwareVersion: {ps.InstrumentFirmwareVersion}");
             Console.WriteLine($"Status:          {ps.GetStatus()}");
 
-            RampUpVoltageM1(12);
-            Console.WriteLine($"M1 completed  {ps.GetVoltage():F2} V  {ps.GetCurrent():F3} A");
-            Console.WriteLine($"Status:       {ps.GetStatus()}");
+            ps.TurnOn();
+            ps.SetCurrent(4.106);
+            ps.SetVoltage(ps.MaxVoltage);
             Thread.Sleep(2000);
+            LogValues(100);
 
-            RampUpVoltageM2(12);
-            Console.WriteLine($"M2 completed  {ps.GetVoltage():F2} V  {ps.GetCurrent():F3} A");
+
+            RampUpCurrentMC1(4.106);
+            Console.WriteLine($"MC1 completed  {ps.GetVoltage():F2} V  {ps.GetCurrent():F3} A");
             Console.WriteLine($"Status:       {ps.GetStatus()}");
             Thread.Sleep(2000);
+            LogValues(100);
+
 
             ps.TurnOff();
             ps.SetVoltage(0);
@@ -42,28 +47,78 @@ namespace TestPS
 
         //==============================================================
 
+        public static void LogValues(int numbers)
+        {
+            Console.WriteLine();
+            for (int i = 0; i < numbers; i++)
+            {
+                Console.WriteLine($"{i,3}: [{ps.GetStatus()}]  {ps.GetVoltage():F2} V  {ps.GetCurrent():F3} A");
+                Thread.Sleep(1000);
+            }
+            Console.WriteLine();
+        }
+
+        //==============================================================
+
+        public static void RampUpCurrentMC1(double targetCurrent)
+        {
+            // starting with 0 A and gradually increasing current until the voltage reaches the set value
+            // this will fail if the load is not connected
+            // Clamp voltage to max voltage
+            if (targetCurrent > ps.MaxCurrent)
+                targetCurrent = ps.MaxCurrent;
+            ps.TurnOff();
+            ps.SetCurrent(0);
+            ps.SetVoltage(ps.MaxVoltage);
+            ps.TurnOn();
+            DateTime start = DateTime.Now;
+            TimeSpan elapsed = TimeSpan.Zero;
+            int index = 0;
+            for (double runCurrent = 0; runCurrent <= ps.MaxCurrent; runCurrent += 0.01)
+            {
+                index++;
+                ps.SetCurrent(runCurrent);
+                Thread.Sleep(1);
+                double i = ps.GetCurrent();
+                elapsed = DateTime.Now - start;
+                if (i >= targetCurrent)
+                    break;
+            }
+            ps.SetCurrent(targetCurrent);
+            Console.WriteLine($"MC1  -  {index,3}: {elapsed.TotalSeconds,4:F1} s  {ps.GetVoltage():F2} V  {ps.GetCurrent():F3} A");
+        }
+
+        //==============================================================
+
+
+
+        //==============================================================
+
         public static void RampUpVoltageM1(double targetVoltage)
         {
             // starting with 0 A and gradually increasing current until the voltage reaches the set value
             // this will fail if the load is not connected
+            // Clamp voltage to max voltage
+            if (targetVoltage > ps.MaxVoltage)
+                targetVoltage = ps.MaxVoltage;
             ps.TurnOff();
             ps.SetCurrent(0);
             ps.SetVoltage(targetVoltage);
             ps.TurnOn();
             DateTime start = DateTime.Now;
+            TimeSpan elapsed = TimeSpan.Zero;
             int index = 0;
-            for (double runCurrent = 0; runCurrent <= ps.MaxCurrent; runCurrent += 0.010)
+            for (double runCurrent = 0; runCurrent <= ps.MaxCurrent; runCurrent += 0.005)
             {
                 index++;
                 ps.SetCurrent(runCurrent);
                 Thread.Sleep(1);
                 double u = ps.GetVoltage();
-                double i = ps.GetCurrent();
-                TimeSpan elapsed = DateTime.Now - start;
-                Console.WriteLine($"M1  -  {index,3}: {elapsed.TotalSeconds,4:F1} s  {u:F2} V  {i:F3} A");
+                elapsed = DateTime.Now - start;
                 if (u >= targetVoltage)
                     break;
             }
+            Console.WriteLine($"M1  -  {index,3}: {elapsed.TotalSeconds,4:F1} s  {ps.GetVoltage():F2} V  {ps.GetCurrent():F3} A");
         }
 
         //==============================================================
@@ -75,23 +130,23 @@ namespace TestPS
             if(targetVoltage > ps.MaxVoltage)
                 targetVoltage = ps.MaxVoltage;
             ps.TurnOff();
-            ps.SetCurrent(ps.MaxCurrent);
             ps.SetVoltage(0);
+            ps.SetCurrent(ps.MaxCurrent);
             ps.TurnOn();
             DateTime start = DateTime.Now;
+            TimeSpan elapsed = TimeSpan.Zero;
             int index = 0;
-            for (double runVoltage = 0; runVoltage <= targetVoltage; runVoltage += 0.010)
+            for (double runVoltage = 0; runVoltage <= targetVoltage; runVoltage += 0.01)
             {
                 index++;
                 ps.SetVoltage(runVoltage);
                 Thread.Sleep(1);
                 double u = ps.GetVoltage();
-                double i = ps.GetCurrent();
-                TimeSpan elapsed = DateTime.Now - start;
-                Console.WriteLine($"M2  -  {index,3}: {elapsed.TotalSeconds,4:F1} s  {u:F2} V  {i:F3} A");
+                elapsed = DateTime.Now - start;
                 if (u >= targetVoltage)
                     break;
             }
+            Console.WriteLine($"M2  -  {index,3}: {elapsed.TotalSeconds,4:F1} s  {ps.GetVoltage():F2} V  {ps.GetCurrent():F3} A");
         }
 
         //==============================================================
