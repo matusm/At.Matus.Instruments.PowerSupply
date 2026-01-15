@@ -23,17 +23,23 @@ namespace TestPS
             Console.WriteLine($"FirmwareVersion: {ps.InstrumentFirmwareVersion}");
             Console.WriteLine($"Status:          {ps.GetStatus()}");
 
+            LogStatus();
+
             ps.TurnOn();
             ps.SetCurrent(4.106);
             ps.SetVoltage(ps.MaxVoltage);
+            LogStatus();
             Thread.Sleep(2000);
+            LogStatus();
             LogValues(100);
 
 
             RampUpCurrentMC1(4.106);
             Console.WriteLine($"MC1 completed  {ps.GetVoltage():F2} V  {ps.GetCurrent():F3} A");
             Console.WriteLine($"Status:       {ps.GetStatus()}");
+            LogStatus();
             Thread.Sleep(2000);
+            LogStatus();
             LogValues(100);
 
 
@@ -41,11 +47,17 @@ namespace TestPS
             ps.SetVoltage(0);
             ps.SetCurrent(0);
             Console.WriteLine("Shut down");
-            Console.WriteLine($"Status:       {ps.GetStatus()}");
+            LogStatus();
             Thread.Sleep(2000);
         }
 
         //==============================================================
+
+        public static void LogStatus()
+        {
+            Console.WriteLine($"Status[{ps.GetStatus()}] {ps.Mode} {ps.OutputState} {ps.OcpState}");
+        }
+
 
         public static void LogValues(int numbers)
         {
