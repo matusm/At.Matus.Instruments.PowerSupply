@@ -1,6 +1,7 @@
 ﻿using At.Matus.Instruments.PowerSupply.Abstractions;
 using System.IO.Ports;
 using System.Globalization;
+using System.Threading;
 
 namespace At.Matus.Instruments.PowerSupply.Domain
 {
@@ -36,9 +37,20 @@ namespace At.Matus.Instruments.PowerSupply.Domain
 
         public void TurnOn() => Query("OUT1");
 
-        public void SetVoltage(double voltage) => Query($"VSET1:{voltage.ToString("F2", CultureInfo.InvariantCulture)}");
+        public void SetVoltage(double voltage)
+        {
+            if(voltage < 0 || voltage > MaxVoltage)
+                throw new System.ArgumentOutOfRangeException(nameof(voltage), $"Voltage must be between 0 and {MaxVoltage:F2} V.");
+            Query($"VSET1:{voltage.ToString("F2", CultureInfo.InvariantCulture)}");
+        }
 
-        public void SetCurrent(double current) => Query($"ISET1:{current.ToString("F3", CultureInfo.InvariantCulture)}");
+        public void SetCurrent(double current)
+        {
+            if(current < 0 || current > MaxCurrent)
+                throw new System.ArgumentOutOfRangeException(nameof(current), $"Current must be between 0 and {MaxCurrent:F3} A.");
+            Query($"ISET1:{current.ToString("F3", CultureInfo.InvariantCulture)}");
+            Thread.Sleep(50); // Allow time for the setting to take effect, especially important for current settings (see manual)
+        }
 
         public double GetSetVoltage() => QueryDouble("VSET1?");
 
@@ -52,10 +64,6 @@ namespace At.Matus.Instruments.PowerSupply.Domain
 
         public void OcpOn() => Query("OCP1");
 
-        public string GetStatus()
-        {
-            byte b = _GetStatus();
-            return ToFriendlyString(b);
-        }
+        public string GetStatus() => ToFriendlyString(_GetStatus());
     }
 }
