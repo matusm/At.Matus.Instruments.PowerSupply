@@ -26,22 +26,28 @@ namespace TestPS
             LogStatus();
 
             ps.TurnOn();
-            ps.SetCurrent(4.106);
+            ps.SetCurrent(4.100);
             ps.SetVoltage(ps.MaxVoltage);
             LogStatus();
             Thread.Sleep(2000);
             LogStatus();
             LogValues(100);
 
-
-            RampUpCurrentMC1(4.106, 0.02);
+            RampUpCurrentMC1(4.100, 0.01);
             Console.WriteLine($"MC1 completed  {ps.GetVoltage():F2} V  {ps.GetCurrent():F3} A");
-            Console.WriteLine($"Status:       {ps.GetStatus()}");
+            Console.WriteLine($"Status:        {ps.GetStatus()}");
             LogStatus();
             Thread.Sleep(2000);
             LogStatus();
             LogValues(100);
 
+            RampUpCurrentMC2(4.100, 0.01);
+            Console.WriteLine($"MC2 completed  {ps.GetVoltage():F2} V  {ps.GetCurrent():F3} A");
+            Console.WriteLine($"Status:        {ps.GetStatus()}");
+            LogStatus();
+            Thread.Sleep(2000);
+            LogStatus();
+            LogValues(100);
 
             ps.TurnOff();
             ps.SetVoltage(0);
@@ -81,7 +87,7 @@ namespace TestPS
             if (targetCurrent > ps.MaxCurrent)
                 targetCurrent = ps.MaxCurrent;
             // Clamp step size
-            if (stepSize <= 0)
+            if (stepSize < 0.001)
                 stepSize = 0.001;
             ps.TurnOff();
             ps.SetCurrent(0);
@@ -105,7 +111,35 @@ namespace TestPS
 
         //==============================================================
 
-
+        public static void RampUpCurrentMC2(double targetCurrent, double stepSize)
+        {
+            // Starting with 0 A and gradually increasing current until it reaches the set value
+            // This will fail if the load is not connected
+            // Clamp target current to max current
+            if (targetCurrent > ps.MaxCurrent)
+                targetCurrent = ps.MaxCurrent;
+            // Clamp step size
+            if (stepSize < 0.01)
+                stepSize = 0.01;
+            ps.TurnOff();
+            ps.SetCurrent(targetCurrent);
+            ps.SetVoltage(0);
+            ps.TurnOn();
+            DateTime start = DateTime.Now;
+            TimeSpan elapsed = TimeSpan.Zero;
+            int index = 0;
+            for (double runVoltage = 0; runVoltage <= ps.MaxVoltage; runVoltage += stepSize)
+            {
+                index++;
+                ps.SetVoltage(runVoltage);
+                Thread.Sleep(1);
+                elapsed = DateTime.Now - start;
+                if (ps.GetCurrent() >= targetCurrent)
+                    break;
+            }
+            ps.SetCurrent(targetCurrent);
+            Console.WriteLine($"MC1  -  {index,3}: {elapsed.TotalSeconds,4:F1} s  {ps.GetVoltage():F2} V  {ps.GetCurrent():F3} A");
+        }
 
         //==============================================================
 
@@ -136,11 +170,12 @@ namespace TestPS
             Console.WriteLine($"M1  -  {index,3}: {elapsed.TotalSeconds,4:F1} s  {ps.GetVoltage():F2} V  {ps.GetCurrent():F3} A");
         }
 
+
         //==============================================================
 
         public static void RampUpVoltageM2(double targetVoltage)
         {
-            // starting with 5 A and gradually increasing voltage until the voltage reaches the set value
+            // Starting with 5 A and gradually increasing voltage until the voltage reaches the set value
             // Clamp voltage to max voltage
             if(targetVoltage > ps.MaxVoltage)
                 targetVoltage = ps.MaxVoltage;
