@@ -34,7 +34,7 @@ namespace TestPS
             LogValues(100);
 
 
-            RampUpCurrentMC1(4.106);
+            RampUpCurrentMC1(4.106, 0.02);
             Console.WriteLine($"MC1 completed  {ps.GetVoltage():F2} V  {ps.GetCurrent():F3} A");
             Console.WriteLine($"Status:       {ps.GetStatus()}");
             LogStatus();
@@ -58,13 +58,14 @@ namespace TestPS
             Console.WriteLine($"Status[{ps.GetStatus()}] {ps.Mode} {ps.OutputState} {ps.OcpState}");
         }
 
+        //==============================================================
 
         public static void LogValues(int numbers)
         {
             Console.WriteLine();
             for (int i = 0; i < numbers; i++)
             {
-                Console.WriteLine($"{i,3}: [{ps.GetStatus()}]  {ps.GetVoltage():F2} V  {ps.GetCurrent():F3} A");
+                Console.WriteLine($"{i,3}: {ps.GetVoltage():F2} V  {ps.GetCurrent():F3} A");
                 Thread.Sleep(1000);
             }
             Console.WriteLine();
@@ -72,13 +73,16 @@ namespace TestPS
 
         //==============================================================
 
-        public static void RampUpCurrentMC1(double targetCurrent)
+        public static void RampUpCurrentMC1(double targetCurrent, double stepSize)
         {
-            // starting with 0 A and gradually increasing current until the voltage reaches the set value
-            // this will fail if the load is not connected
-            // Clamp voltage to max voltage
+            // Starting with 0 A and gradually increasing current until it reaches the set value
+            // This will fail if the load is not connected
+            // Clamp target current to max current
             if (targetCurrent > ps.MaxCurrent)
                 targetCurrent = ps.MaxCurrent;
+            // Clamp step size
+            if (stepSize <= 0)
+                stepSize = 0.001;
             ps.TurnOff();
             ps.SetCurrent(0);
             ps.SetVoltage(ps.MaxVoltage);
@@ -86,14 +90,13 @@ namespace TestPS
             DateTime start = DateTime.Now;
             TimeSpan elapsed = TimeSpan.Zero;
             int index = 0;
-            for (double runCurrent = 0; runCurrent <= ps.MaxCurrent; runCurrent += 0.01)
+            for (double runCurrent = 0; runCurrent <= ps.MaxCurrent; runCurrent += stepSize)
             {
                 index++;
                 ps.SetCurrent(runCurrent);
                 Thread.Sleep(1);
-                double i = ps.GetCurrent();
                 elapsed = DateTime.Now - start;
-                if (i >= targetCurrent)
+                if (ps.GetCurrent() >= targetCurrent)
                     break;
             }
             ps.SetCurrent(targetCurrent);
