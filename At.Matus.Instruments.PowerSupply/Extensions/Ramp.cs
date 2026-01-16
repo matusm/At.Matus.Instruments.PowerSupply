@@ -5,12 +5,12 @@ namespace At.Matus.Instruments.PowerSupply.Extensions
 {
     public static class Ramp
     {
-
         public static void RampUpCurrent(this IPowerSupply powerSupply, double targetCurrent, double rampTimeSec)
         {
-            var stepSize = StepSizeForRampCurrentUp(targetCurrent, rampTimeSec);
             if (targetCurrent > powerSupply.MaxCurrent)
                 targetCurrent = powerSupply.MaxCurrent;
+            double stepSize = StepSizeForRamp(targetCurrent, rampTimeSec, _timePerStepSecCUp);
+            stepSize = stepSize < 0.001 ? 0.001 : stepSize;
             powerSupply.TurnOff();
             powerSupply.SetCurrent(0);
             powerSupply.SetVoltage(powerSupply.MaxVoltage);
@@ -29,10 +29,11 @@ namespace At.Matus.Instruments.PowerSupply.Extensions
 
         public static void RampUpVoltage(this IPowerSupply powerSupply, double targetVoltage, double rampTimeSec)
         {
-            // TODO Determine step size based on target voltage and total ramp time in seconds
-            double stepSize = 0.01;
             if (targetVoltage > powerSupply.MaxVoltage)
                 targetVoltage = powerSupply.MaxVoltage;
+            double stepSize = StepSizeForRamp(targetVoltage, rampTimeSec, _timePerStepSecVUp);
+            stepSize = stepSize < 0.01 ? 0.01 : stepSize;
+            stepSize = 0.01; // Temporary hardcoded step size until proper measurement is done
             powerSupply.TurnOff();
             powerSupply.SetVoltage(0);
             powerSupply.SetCurrent(powerSupply.MaxCurrent);
@@ -48,7 +49,8 @@ namespace At.Matus.Instruments.PowerSupply.Extensions
 
         public static void RampDown(this IPowerSupply powerSupply, double rampTimeSec)
         {
-            var stepSize = StepSizeForRampCurrentDown(powerSupply.GetCurrent(), rampTimeSec);
+            var stepSize = StepSizeForRamp(powerSupply.GetCurrent(), rampTimeSec, _timePerStepSecCDown);
+            stepSize = stepSize < 0.001 ? 0.001 : stepSize;
             double startingCurrent = powerSupply.GetCurrent();
             powerSupply.SetCurrent(startingCurrent);
             powerSupply.SetVoltage(powerSupply.MaxVoltage);
@@ -63,28 +65,15 @@ namespace At.Matus.Instruments.PowerSupply.Extensions
             powerSupply.TurnOff();
         }
 
+        private const double _timePerStepSecCUp = 0.15752;
+        private const double _timePerStepSecCDown = 0.1414;
+        private const double _timePerStepSecVUp = 0.1; // Placeholder value!
 
-        private static double StepSizeForRampCurrentUp(double targetCurrent, double rampTimeSec)
+        private static double StepSizeForRamp(double targetValue, double rampTimeSec, double _parameter)
         {
-            // Determine step size based on target current and total ramp time in seconds
-            int nSteps = (int)((rampTimeSec - 0.3) / 0.15752);
-            double stepSize = targetCurrent / (nSteps + 2);
-            // Clamp step size
-            if (stepSize < 0.001)
-                stepSize = 0.001;
+            int nSteps = (int)((rampTimeSec - 0.3) / _parameter);
+            double stepSize = targetValue / (nSteps + 2);
             return stepSize;
         }
-
-        private static double StepSizeForRampCurrentDown(double targetCurrent, double rampTimeSec)
-        {
-            // Determine step size based on target current and total ramp time in seconds
-            int nSteps = (int)((rampTimeSec - 0.3) / 0.1414);
-            double stepSize = targetCurrent / (nSteps + 2);
-            // Clamp step size
-            if (stepSize < 0.001)
-                stepSize = 0.001;
-            return stepSize;
-        }
-
     }
 }
