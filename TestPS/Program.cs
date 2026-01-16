@@ -25,29 +25,44 @@ namespace TestPS
 
             LogStatus();
 
-            ps.TurnOn();
-            ps.SetCurrent(4.100);
-            ps.SetVoltage(ps.MaxVoltage);
-            LogStatus();
-            Thread.Sleep(2000);
-            LogStatus();
-            LogValues(100);
+            //ps.TurnOn();
+            //ps.SetCurrent(4.100);
+            //ps.SetVoltage(ps.MaxVoltage);
+            //LogStatus();
+            //Thread.Sleep(2000);
+            //LogStatus();
+            //LogValues(100);
 
-            RampUpCurrentMC1(4.100, 0.01);
-            Console.WriteLine($"MC1 completed  {ps.GetVoltage():F2} V  {ps.GetCurrent():F3} A");
-            Console.WriteLine($"Status:        {ps.GetStatus()}");
+            // 10 seconds ramp
+            RampUpCurrent(4.100, 10);
             LogStatus();
-            Thread.Sleep(2000);
+            RampDownCurrent(10);
             LogStatus();
-            LogValues(100);
 
-            RampUpCurrentMC2(4.100, 0.01);
-            Console.WriteLine($"MC2 completed  {ps.GetVoltage():F2} V  {ps.GetCurrent():F3} A");
-            Console.WriteLine($"Status:        {ps.GetStatus()}");
+            // 30 seconds ramp
+            RampUpCurrent(4.100, 30);
             LogStatus();
-            Thread.Sleep(2000);
+            RampDownCurrent(30);
             LogStatus();
-            LogValues(100);
+
+            // 60 seconds ramp
+            RampUpCurrent(4.100, 60);
+            RampDownCurrent(60);
+            LogStatus();
+
+            // 5 minutes ramp
+            RampUpCurrent(4.100, 300);
+            LogStatus();
+            RampDownCurrent(300);
+            LogStatus();
+
+            //RampUpCurrentMC2(4.100, 0.01);
+            //Console.WriteLine($"MC2 completed  {ps.GetVoltage():F2} V  {ps.GetCurrent():F3} A");
+            //Console.WriteLine($"Status:        {ps.GetStatus()}");
+            //LogStatus();
+            //Thread.Sleep(2000);
+            //LogStatus();
+            //LogValues(100);
 
             ps.TurnOff();
             ps.SetVoltage(0);
@@ -79,6 +94,24 @@ namespace TestPS
 
         //==============================================================
 
+        public static void RampUpCurrent(double targetCurrent, double rampTimeSec)
+        {
+            double stepSize = StepsizeForMC1up(targetCurrent, rampTimeSec);
+            RampUpCurrentMC1(targetCurrent, stepSize);
+        }
+
+        //==============================================================
+
+
+        public static void RampDownCurrent(double rampTimeSec)
+        {
+            var targetCurrent = ps.GetCurrent();
+            double stepSize = StepsizeForMC1down(targetCurrent, rampTimeSec);
+            RampDownCurrentMC1(stepSize);
+        }
+
+        //==============================================================
+
         public static void RampUpCurrentMC1(double targetCurrent, double stepSize)
         {
             // Starting with 0 A and gradually increasing current until it reaches the set value
@@ -98,6 +131,8 @@ namespace TestPS
             int index = 0;
             for (double runCurrent = 0; runCurrent <= ps.MaxCurrent; runCurrent += stepSize)
             {
+                if (runCurrent >= targetCurrent)
+                    break;
                 index++;
                 ps.SetCurrent(runCurrent);
                 Thread.Sleep(1);
@@ -106,7 +141,57 @@ namespace TestPS
                     break;
             }
             ps.SetCurrent(targetCurrent);
-            Console.WriteLine($"MC1  -  {index,3}: {elapsed.TotalSeconds,4:F1} s  {ps.GetVoltage():F2} V  {ps.GetCurrent():F3} A");
+            Console.WriteLine($"MC1 ramp up  -  {index,3}: {elapsed.TotalSeconds,4:F1} s  {ps.GetVoltage():F2} V  {ps.GetCurrent():F3} A");
+        }
+
+        //==============================================================
+
+        public static void RampDownCurrentMC1(double stepSize)
+        {
+            if (ps.OutputState != OutputState.On) return;
+            double startingCurrent = ps.GetCurrent();
+            // Clamp step size
+            if (stepSize < 0.001)
+                stepSize = 0.001;
+            ps.SetCurrent(startingCurrent);
+            ps.SetVoltage(ps.MaxVoltage);
+            DateTime start = DateTime.Now;
+            TimeSpan elapsed = TimeSpan.Zero;
+            int index = 0;
+            for (double runCurrent = startingCurrent; runCurrent >= 0; runCurrent -= stepSize)
+            {
+                if (runCurrent <= 0)
+                    break;
+                index++;
+                ps.SetCurrent(runCurrent);
+                Thread.Sleep(1);
+                elapsed = DateTime.Now - start;
+            }
+            ps.SetCurrent(0);
+            Console.WriteLine($"MC1 ramp down -  {index,3}: {elapsed.TotalSeconds,4:F1} s  {ps.GetVoltage():F2} V  {ps.GetCurrent():F3} A");
+            ps.TurnOff();
+        }
+
+        //==============================================================
+
+
+        public static double StepsizeForMC1up(double targetCurrent, double rampTimeSec)
+        {
+            // Determine step size based on target current and total allowed ramp time in seconds
+            int nSteps = (int)((rampTimeSec - 0.3) / 0.15752);
+            double stepSize = targetCurrent / (nSteps + 2);
+            return stepSize;
+        }
+
+        //==============================================================
+
+
+        public static double StepsizeForMC1down(double targetCurrent, double rampTimeSec)
+        {
+            // Determine step size based on target current and total allowed ramp time in seconds
+            int nSteps = (int)((rampTimeSec - 0.3) / 0.1414);
+            double stepSize = targetCurrent / (nSteps + 2);
+            return stepSize;
         }
 
         //==============================================================
@@ -138,7 +223,8 @@ namespace TestPS
                     break;
             }
             ps.SetCurrent(targetCurrent);
-            Console.WriteLine($"MC1  -  {index,3}: {elapsed.TotalSeconds,4:F1} s  {ps.GetVoltage():F2} V  {ps.GetCurrent():F3} A");
+            ps.SetVoltage(ps.MaxVoltage);
+            Console.WriteLine($"MC2  -  {index,3}: {elapsed.TotalSeconds,4:F1} s  {ps.GetVoltage():F2} V  {ps.GetCurrent():F3} A");
         }
 
         //==============================================================
