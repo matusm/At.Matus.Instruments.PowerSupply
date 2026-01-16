@@ -16,7 +16,7 @@ namespace TestPS
             powerSupply = new RsPower("COM6");
 
             powerSupply.TurnOff();
-            powerSupply.SetVoltage(0); 
+            powerSupply.SetVoltage(0);
             powerSupply.SetCurrent(0);
 
             Console.WriteLine($"Type:            {powerSupply.InstrumentType}");
@@ -26,25 +26,29 @@ namespace TestPS
 
             LogStatus();
 
-            //ps.TurnOn();
-            //ps.SetCurrent(4.100);
-            //ps.SetVoltage(ps.MaxVoltage);
-            //LogStatus();
-            //Thread.Sleep(2000);
-            //LogStatus();
-            //LogValues(100);
+            RampUpVoltageDebug(12.00);
+            LogValues(50);
+            powerSupply.RampDown(30);
 
-            // 10 seconds ramp
-            powerSupply.RampUpCurrent(4.100, 10);
-            LogStatus();
-            powerSupply.RampDownCurrent(10);
-            LogStatus();
+            ////ps.TurnOn();
+            ////ps.SetCurrent(4.100);
+            ////ps.SetVoltage(ps.MaxVoltage);
+            ////LogStatus();
+            ////Thread.Sleep(2000);
+            ////LogStatus();
+            ////LogValues(100);
 
-            // 60 seconds ramp
-            powerSupply.RampUpCurrent(4.100, 60);
-            LogStatus();
-            powerSupply.RampDownCurrent(60);
-            LogStatus();
+            //// 10 seconds ramp
+            //powerSupply.RampUpCurrent(4.100, 10);
+            //LogStatus();
+            //powerSupply.RampDown(10);
+            //LogStatus();
+
+            //// 60 seconds ramp
+            //powerSupply.RampUpCurrent(4.100, 60);
+            //LogStatus();
+            //powerSupply.RampDown(60);
+            //LogStatus();
 
             // 5 minutes ramp
             //powerSupply.RampUpCurrent(4.100, 300);
@@ -55,9 +59,18 @@ namespace TestPS
             powerSupply.TurnOff();
             powerSupply.SetVoltage(0);
             powerSupply.SetCurrent(0);
-            Console.WriteLine("Shut down");
             LogStatus();
-            Thread.Sleep(2000);
+        }
+
+        //==============================================================
+
+        public static void RampUpVoltageDebug(double targetVoltage)
+        {
+            DateTime start = DateTime.Now;
+            Console.WriteLine("Ramp voltage up ...");
+            powerSupply.RampUpVoltage(targetVoltage, 60);
+            var elapsed = DateTime.Now - start;
+            Console.WriteLine($"RampUpV  -  {elapsed.TotalSeconds,4:F1} s  {powerSupply.GetVoltage():F2} V  {powerSupply.GetCurrent():F3} A");
         }
 
         //==============================================================
@@ -80,66 +93,8 @@ namespace TestPS
             Console.WriteLine();
         }
 
-
         //==============================================================
 
-        public static void RampUpVoltageM1(double targetVoltage)
-        {
-            // starting with 0 A and gradually increasing current until the voltage reaches the set value
-            // this will fail if the load is not connected
-            // Clamp voltage to max voltage
-            if (targetVoltage > powerSupply.MaxVoltage)
-                targetVoltage = powerSupply.MaxVoltage;
-            powerSupply.TurnOff();
-            powerSupply.SetCurrent(0);
-            powerSupply.SetVoltage(targetVoltage);
-            powerSupply.TurnOn();
-            DateTime start = DateTime.Now;
-            TimeSpan elapsed = TimeSpan.Zero;
-            int index = 0;
-            for (double runCurrent = 0; runCurrent <= powerSupply.MaxCurrent; runCurrent += 0.005)
-            {
-                index++;
-                powerSupply.SetCurrent(runCurrent);
-                Thread.Sleep(1);
-                double u = powerSupply.GetVoltage();
-                elapsed = DateTime.Now - start;
-                if (u >= targetVoltage)
-                    break;
-            }
-            Console.WriteLine($"M1  -  {index,3}: {elapsed.TotalSeconds,4:F1} s  {powerSupply.GetVoltage():F2} V  {powerSupply.GetCurrent():F3} A");
-        }
-
-
-        //==============================================================
-
-        public static void RampUpVoltageM2(double targetVoltage)
-        {
-            // Starting with 5 A and gradually increasing voltage until the voltage reaches the set value
-            // Clamp voltage to max voltage
-            if(targetVoltage > powerSupply.MaxVoltage)
-                targetVoltage = powerSupply.MaxVoltage;
-            powerSupply.TurnOff();
-            powerSupply.SetVoltage(0);
-            powerSupply.SetCurrent(powerSupply.MaxCurrent);
-            powerSupply.TurnOn();
-            DateTime start = DateTime.Now;
-            TimeSpan elapsed = TimeSpan.Zero;
-            int index = 0;
-            for (double runVoltage = 0; runVoltage <= targetVoltage; runVoltage += 0.01)
-            {
-                index++;
-                powerSupply.SetVoltage(runVoltage);
-                Thread.Sleep(1);
-                double u = powerSupply.GetVoltage();
-                elapsed = DateTime.Now - start;
-                if (u >= targetVoltage)
-                    break;
-            }
-            Console.WriteLine($"M2  -  {index,3}: {elapsed.TotalSeconds,4:F1} s  {powerSupply.GetVoltage():F2} V  {powerSupply.GetCurrent():F3} A");
-        }
-
-        //==============================================================
 
     }
 }

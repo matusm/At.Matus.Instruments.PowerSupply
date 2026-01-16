@@ -27,7 +27,26 @@ namespace At.Matus.Instruments.PowerSupply.Extensions
             powerSupply.SetCurrent(targetCurrent);
         }
 
-        public static void RampDownCurrent(this IPowerSupply powerSupply, double rampTimeSec)
+        public static void RampUpVoltage(this IPowerSupply powerSupply, double targetVoltage, double rampTimeSec)
+        {
+            // TODO Determine step size based on target voltage and total ramp time in seconds
+            double stepSize = 0.01;
+            if (targetVoltage > powerSupply.MaxVoltage)
+                targetVoltage = powerSupply.MaxVoltage;
+            powerSupply.TurnOff();
+            powerSupply.SetVoltage(0);
+            powerSupply.SetCurrent(powerSupply.MaxCurrent);
+            powerSupply.TurnOn();
+            for (double runVoltage = 0; runVoltage <= targetVoltage; runVoltage += stepSize)
+            {
+                powerSupply.SetVoltage(runVoltage);
+                Thread.Sleep(1);
+                if (powerSupply.GetVoltage() >= targetVoltage)
+                    break;
+            }
+        }
+
+        public static void RampDown(this IPowerSupply powerSupply, double rampTimeSec)
         {
             var stepSize = StepSizeForRampCurrentDown(powerSupply.GetCurrent(), rampTimeSec);
             double startingCurrent = powerSupply.GetCurrent();
