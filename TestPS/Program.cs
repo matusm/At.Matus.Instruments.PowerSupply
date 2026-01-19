@@ -26,9 +26,17 @@ namespace TestPS
 
             LogStatus();
 
-            RampUpVoltageDebug(12.00);
-            LogValues(50);
-            powerSupply.RampDown(30);
+            RampUpVoltageDebug(12.00, 10);
+            LogValues(5);
+            powerSupply.RampDown(10);
+
+            RampUpVoltageDebug(12.00, 30);
+            LogValues(5);
+            powerSupply.RampDown(10);
+
+            RampUpVoltageDebug(12.00, 300);
+            LogValues(5);
+            powerSupply.RampDown(10);
 
             ////ps.TurnOn();
             ////ps.SetCurrent(4.100);
@@ -64,11 +72,11 @@ namespace TestPS
 
         //==============================================================
 
-        public static void RampUpVoltageDebug(double targetVoltage)
+        public static void RampUpVoltageDebug(double targetVoltage, double time)
         {
             DateTime start = DateTime.Now;
             Console.WriteLine("Ramp voltage up ...");
-            powerSupply.RampUpVoltage(targetVoltage, 60);
+            powerSupply.RampUpVoltage(targetVoltage, time);
             var elapsed = DateTime.Now - start;
             Console.WriteLine($"RampUpV  -  {elapsed.TotalSeconds,4:F1} s  {powerSupply.GetVoltage():F2} V  {powerSupply.GetCurrent():F3} A");
         }

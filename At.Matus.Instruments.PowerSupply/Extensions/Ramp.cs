@@ -33,8 +33,6 @@ namespace At.Matus.Instruments.PowerSupply.Extensions
                 targetVoltage = powerSupply.MaxVoltage;
             double stepSize = StepSizeForRamp(targetVoltage, rampTimeSec, _timePerStepSecVUp);
             stepSize = stepSize < 0.01 ? 0.01 : stepSize;
-            stepSize = 0.01; // Temporary hardcoded step size until proper measurement is done
-            powerSupply.TurnOff();
             powerSupply.SetVoltage(0);
             powerSupply.SetCurrent(powerSupply.MaxCurrent);
             powerSupply.TurnOn();
@@ -45,6 +43,7 @@ namespace At.Matus.Instruments.PowerSupply.Extensions
                 if (powerSupply.GetVoltage() >= targetVoltage)
                     break;
             }
+            powerSupply.SetVoltage(targetVoltage);
         }
 
         public static void RampDown(this IPowerSupply powerSupply, double rampTimeSec)
@@ -67,7 +66,7 @@ namespace At.Matus.Instruments.PowerSupply.Extensions
 
         private const double _timePerStepSecCUp = 0.15752;
         private const double _timePerStepSecCDown = 0.1414;
-        private const double _timePerStepSecVUp = 0.1; // Placeholder value!
+        private const double _timePerStepSecVUp = 0.1580;
 
         private static double StepSizeForRamp(double targetValue, double rampTimeSec, double _parameter)
         {
