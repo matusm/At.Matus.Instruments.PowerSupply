@@ -27,6 +27,9 @@ namespace At.Matus.Instruments.PowerSupply.Extensions
             powerSupply.SetCurrent(targetCurrent);
         }
 
+        // currently the slowest ramp is 0.0632 V/s (190 s for 12 V)
+        // due to minimum step size of 0.01 V
+        // so for very long ramp times the actual ramp time will be shorter
         public static void RampUpVoltage(this IPowerSupply powerSupply, double targetVoltage, double rampTimeSec)
         {
             if (targetVoltage > powerSupply.MaxVoltage)
